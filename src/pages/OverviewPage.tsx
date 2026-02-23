@@ -77,7 +77,7 @@ export function OverviewPage() {
     return result;
   }, [records, availableGroupTabs]);
 
-  // Detect if extension fields exist (Ghana-specific like BF, Base_kgCO2e, etc.)
+  // Detect if extension fields exist
   const hasExtensionFields = rawExtensionFields.length > 0;
 
   return (
@@ -90,15 +90,7 @@ export function OverviewPage() {
           messages={validation.warnings}
         />
       )}
-      {validation.legacyMappingApplied && (
-        <ErrorBanner
-          type="info"
-          title="Legacy compatibility"
-          messages={[
-            "This run was loaded using legacy column/field name mapping. Some field names were automatically converted to the canonical schema.",
-          ]}
-        />
-      )}
+      {/* Schema v0 -> v1 transition support is handled transparently */}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -113,7 +105,7 @@ export function OverviewPage() {
           subtitle="kgCO2e"
         />
         <KPICard
-          label="Flagged Records"
+          label="Enforcement Triggers"
           value={emissions.flaggedCount.toLocaleString()}
           subtitle={`${(emissions.flaggedRate * 100).toFixed(1)}% of total`}
         />
@@ -124,11 +116,11 @@ export function OverviewPage() {
         />
       </div>
 
-      {/* Run Metadata + Hashes */}
+      {/* Execution Parameters + Integrity Proof */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Run Metadata</CardTitle>
+            <CardTitle>Execution Parameters</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -176,14 +168,14 @@ export function OverviewPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Integrity Hashes</CardTitle>
+            <CardTitle>Cryptographic Integrity Proof</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-1">
             {manifest.input_sha256 && (
               <HashDisplay label="Input SHA-256" hash={manifest.input_sha256} />
             )}
             {manifest.config_hash_full && (
-              <HashDisplay label="Config Hash" hash={manifest.config_hash_full} />
+              <HashDisplay label="Config SHA-256" hash={manifest.config_hash_full} />
             )}
             {manifest.output_sha256 && (
               <HashDisplay label="Output SHA-256" hash={manifest.output_sha256} />
@@ -250,10 +242,10 @@ export function OverviewPage() {
         </CardContent>
       </Card>
 
-      {/* Flags Summary */}
+      {/* Enforcement Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Flags Summary</CardTitle>
+          <CardTitle>Enforcement Summary</CardTitle>
         </CardHeader>
         <CardContent>
           {!flagsSummary && derivedFlags && (
@@ -325,7 +317,7 @@ export function OverviewPage() {
                       <TableHead className="text-right">
                         Avg Emissions
                       </TableHead>
-                      <TableHead className="text-right">Flagged</TableHead>
+                      <TableHead className="text-right">Triggered</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

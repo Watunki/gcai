@@ -102,7 +102,7 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   const columnValidation = validateColumns(normalizedHeaders, csvLegacyApplied);
   if (csvLegacyApplied) {
     columnValidation.warnings.push(
-      "Legacy column names were mapped to canonical names."
+      "Schema v0 column names were normalised to v1 canonical format."
     );
   }
   validationReports.push(columnValidation);
@@ -123,7 +123,7 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   );
   if (manifestLegacyApplied) {
     manifestValidation.warnings.push(
-      "Legacy manifest field names were mapped to canonical names."
+      "Schema v0 manifest fields were normalised to v1 canonical format."
     );
   }
   validationReports.push(manifestValidation);

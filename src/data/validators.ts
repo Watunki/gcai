@@ -20,9 +20,9 @@ export function validateColumns(
   const missing = REQUIRED_CSV_COLUMNS.filter((col) => !headerSet.has(col));
   if (missing.length > 0) {
     if (legacyApplied) {
-      // Legacy data: treat missing required as warnings, not errors
+      // Schema v0 data: treat missing required as warnings, not errors
       warnings.push(
-        `After legacy mapping, still missing columns (defaulting to N/A): ${missing.join(", ")}`
+        `After schema normalisation, columns defaulting to N/A: ${missing.join(", ")}`
       );
     } else {
       errors.push(`Missing required columns: ${missing.join(", ")}`);
@@ -88,7 +88,7 @@ export function validateManifest(
     );
     if (missingStrict.length > 0) {
       warnings.push(
-        `Legacy manifest is missing optional fields (defaulting to empty): ${missingStrict.join(", ")}`
+        `Schema v0 manifest: optional fields defaulting to empty: ${missingStrict.join(", ")}`
       );
     }
   }

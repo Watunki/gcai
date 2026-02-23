@@ -209,7 +209,7 @@ export function DriversPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search driver ID, city, reason, or hash..."
+            placeholder="Search driver ID, city, enforcement reason, or hash..."
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
             className="pl-9"
@@ -223,10 +223,10 @@ export function DriversPage() {
             onChange={(v) => updateFilter("status", v)}
           />
           <FilterSelect
-            label="Fraud Flag"
+            label="Enforcement"
             value={filters.fraudFlag}
             options={["true", "false"]}
-            optionLabels={{ true: "Flagged", false: "Not Flagged" }}
+            optionLabels={{ true: "Triggered", false: "Clear" }}
             onChange={(v) => updateFilter("fraudFlag", v)}
           />
           <FilterSelect
@@ -322,7 +322,7 @@ export function DriversPage() {
                   onSort={handleSort}
                   className="text-right"
                 />
-                <TableHead>Fraud</TableHead>
+                <TableHead>Enforcement</TableHead>
                 <SortableHead
                   field="status"
                   label="Status"
@@ -376,7 +376,7 @@ export function DriversPage() {
                     {formatNumber(record.estimated_emissions)}
                   </TableCell>
                   <TableCell>
-                    <FraudBadge flagged={record.fraud_flag} />
+                    <FraudBadge flagged={record.fraud_flag} reason={record.reason_codes} />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={record.status} />
