@@ -35,10 +35,10 @@ import type { CanonicalRecord } from "@/types";
 
 type SortField =
   | "driver_id"
+  | "city"
   | "distance_km"
   | "estimated_emissions"
-  | "status"
-  | "ts";
+  | "status";
 type SortDir = "asc" | "desc";
 
 interface Filters {
@@ -68,16 +68,43 @@ export function DriversPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(0);
 
+  // Check if vehicle_class/fuel_type columns have real data
+  const hasVehicleClasses = useMemo(() => {
+    if (!data) return false;
+    return data.records.some(
+      (r) => r.vehicle_class && r.vehicle_class !== "N/A"
+    );
+  }, [data]);
+
+  const hasFuelTypes = useMemo(() => {
+    if (!data) return false;
+    return data.records.some((r) => r.fuel_type && r.fuel_type !== "N/A");
+  }, [data]);
+
   // Derive unique filter options
   const filterOptions = useMemo(() => {
     if (!data) return { cities: [], vehicleClasses: [], fuelTypes: [] };
     const cities = [...new Set(data.records.map((r) => r.city))].sort();
-    const vehicleClasses = [
-      ...new Set(data.records.map((r) => r.vehicle_class)),
-    ].sort();
-    const fuelTypes = [...new Set(data.records.map((r) => r.fuel_type))].sort();
+    const vehicleClasses = hasVehicleClasses
+      ? [
+          ...new Set(
+            data.records
+              .map((r) => r.vehicle_class)
+              .filter((v) => v && v !== "N/A")
+          ),
+        ].sort()
+      : [];
+    const fuelTypes = hasFuelTypes
+      ? [
+          ...new Set(
+            data.records
+              .map((r) => r.fuel_type)
+              .filter((v) => v && v !== "N/A")
+          ),
+        ].sort()
+      : [];
     return { cities, vehicleClasses, fuelTypes };
-  }, [data]);
+  }, [data, hasVehicleClasses, hasFuelTypes]);
 
   // Filter records
   const filtered = useMemo(() => {
@@ -90,7 +117,8 @@ export function DriversPage() {
         (r) =>
           r.driver_id.toLowerCase().includes(q) ||
           r.city.toLowerCase().includes(q) ||
-          r.output_hash.toLowerCase().includes(q)
+          r.output_hash.toLowerCase().includes(q) ||
+          (r.reason_codes && r.reason_codes.toLowerCase().includes(q))
       );
     }
     if (filters.status !== ALL) {
@@ -120,7 +148,12 @@ export function DriversPage() {
       let cmp = 0;
       switch (sortField) {
         case "driver_id":
-          cmp = a.driver_id.localeCompare(b.driver_id);
+          cmp = a.driver_id.localeCompare(b.driver_id, undefined, {
+            numeric: true,
+          });
+          break;
+        case "city":
+          cmp = a.city.localeCompare(b.city);
           break;
         case "distance_km":
           cmp = a.distance_km - b.distance_km;
@@ -135,9 +168,6 @@ export function DriversPage() {
             (order[b.status as keyof typeof order] ?? 3);
           break;
         }
-        case "ts":
-          cmp = (a.ts ?? "").localeCompare(b.ts ?? "");
-          break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -172,16 +202,6 @@ export function DriversPage() {
     []
   );
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field)
-      return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
-    return sortDir === "asc" ? (
-      <ArrowUp className="h-3 w-3 ml-1" />
-    ) : (
-      <ArrowDown className="h-3 w-3 ml-1" />
-    );
-  };
-
   if (!data) return null;
 
   return (
@@ -191,7 +211,7 @@ export function DriversPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search driver ID, city, or hash..."
+            placeholder="Search driver ID, city, reason, or hash..."
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
             className="pl-9"
@@ -217,21 +237,23 @@ export function DriversPage() {
             options={filterOptions.cities}
             onChange={(v) => updateFilter("city", v)}
           />
-          <FilterSelect
-            label="Vehicle Class"
-            value={filters.vehicleClass}
-            options={filterOptions.vehicleClasses}
-            onChange={(v) => updateFilter("vehicleClass", v)}
-          />
-          <FilterSelect
-            label="Fuel Type"
-            value={filters.fuelType}
-            options={filterOptions.fuelTypes}
-            onChange={(v) => updateFilter("fuelType", v)}
-          />
-          {Object.values(filters).some(
-            (v) => v !== "" && v !== ALL
-          ) && (
+          {hasVehicleClasses && (
+            <FilterSelect
+              label="Vehicle Class"
+              value={filters.vehicleClass}
+              options={filterOptions.vehicleClasses}
+              onChange={(v) => updateFilter("vehicleClass", v)}
+            />
+          )}
+          {hasFuelTypes && (
+            <FilterSelect
+              label="Fuel Type"
+              value={filters.fuelType}
+              options={filterOptions.fuelTypes}
+              onChange={(v) => updateFilter("fuelType", v)}
+            />
+          )}
+          {Object.values(filters).some((v) => v !== "" && v !== ALL) && (
             <Button
               variant="ghost"
               size="sm"
@@ -266,92 +288,114 @@ export function DriversPage() {
           description="Try adjusting your search or filters."
         />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <SortableHead
-                field="driver_id"
-                label="Driver ID"
-                sortField={sortField}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <TableHead>City</TableHead>
-              <TableHead>Vehicle Class</TableHead>
-              <TableHead>Fuel Type</TableHead>
-              <SortableHead
-                field="distance_km"
-                label="Distance (km)"
-                sortField={sortField}
-                sortDir={sortDir}
-                onSort={handleSort}
-                className="text-right"
-              />
-              <SortableHead
-                field="estimated_emissions"
-                label="Emissions"
-                sortField={sortField}
-                sortDir={sortDir}
-                onSort={handleSort}
-                className="text-right"
-              />
-              <TableHead>Fraud</TableHead>
-              <SortableHead
-                field="status"
-                label="Status"
-                sortField={sortField}
-                sortDir={sortDir}
-                onSort={handleSort}
-              />
-              <TableHead>Hash</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginated.map((record, i) => (
-              <TableRow
-                key={`${record.driver_id}-${record.output_hash}-${i}`}
-                className="cursor-pointer"
-                onClick={() =>
-                  navigate(
-                    `/drivers/${encodeURIComponent(record.driver_id)}`
-                  )
-                }
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableHead
+                  field="driver_id"
+                  label="Driver ID"
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <SortableHead
+                  field="city"
+                  label="City"
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                {hasVehicleClasses && <TableHead>Vehicle Class</TableHead>}
+                {hasFuelTypes && <TableHead>Fuel Type</TableHead>}
+                <SortableHead
+                  field="distance_km"
+                  label="Distance (km)"
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  className="text-right"
+                />
+                <SortableHead
+                  field="estimated_emissions"
+                  label="Emissions (kgCO2e)"
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  className="text-right"
+                />
+                <TableHead>Fraud</TableHead>
+                <SortableHead
+                  field="status"
+                  label="Status"
+                  sortField={sortField}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                />
+                <TableHead>Reason</TableHead>
+                <TableHead>Hash</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((record, i) => (
+                <TableRow
+                  key={`${record.driver_id}-${record.output_hash}-${i}`}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() =>
                     navigate(
                       `/drivers/${encodeURIComponent(record.driver_id)}`
-                    );
+                    )
                   }
-                }}
-              >
-                <TableCell className="font-medium text-foreground">
-                  {record.driver_id}
-                </TableCell>
-                <TableCell className="text-foreground">{record.city}</TableCell>
-                <TableCell className="text-foreground">{record.vehicle_class}</TableCell>
-                <TableCell className="text-foreground">{record.fuel_type}</TableCell>
-                <TableCell className="text-right font-mono text-foreground">
-                  {formatNumber(record.distance_km)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-foreground">
-                  {formatNumber(record.estimated_emissions)}
-                </TableCell>
-                <TableCell>
-                  <FraudBadge flagged={record.fraud_flag} />
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={record.status} />
-                </TableCell>
-                <TableCell>
-                  <code className="text-xs font-mono text-muted-foreground">
-                    {truncateHash(record.output_hash, 6)}
-                  </code>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      navigate(
+                        `/drivers/${encodeURIComponent(record.driver_id)}`
+                      );
+                    }
+                  }}
+                >
+                  <TableCell className="font-medium text-foreground">
+                    {record.driver_id}
+                  </TableCell>
+                  <TableCell className="text-foreground">
+                    {record.city}
+                  </TableCell>
+                  {hasVehicleClasses && (
+                    <TableCell className="text-foreground">
+                      {record.vehicle_class}
+                    </TableCell>
+                  )}
+                  {hasFuelTypes && (
+                    <TableCell className="text-foreground">
+                      {record.fuel_type}
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right font-mono text-foreground">
+                    {formatNumber(record.distance_km)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-foreground">
+                    {formatNumber(record.estimated_emissions)}
+                  </TableCell>
+                  <TableCell>
+                    <FraudBadge flagged={record.fraud_flag} />
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={record.status} />
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground max-w-[160px] truncate">
+                    {record.reason_codes || "-"}
+                  </TableCell>
+                  <TableCell>
+                    <code className="text-xs font-mono text-muted-foreground">
+                      {truncateHash(record.output_hash, 8)}
+                    </code>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Pagination */}

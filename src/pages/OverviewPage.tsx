@@ -25,8 +25,6 @@ import type { GroupByField } from "@/types";
 
 const GROUP_TABS: { value: GroupByField; label: string }[] = [
   { value: "city", label: "By City" },
-  { value: "vehicle_class", label: "By Vehicle Class" },
-  { value: "fuel_type", label: "By Fuel Type" },
   { value: "status", label: "By Status" },
 ];
 
@@ -34,7 +32,7 @@ export function OverviewPage() {
   const { data } = useRunData();
   if (!data) return null;
 
-  const { manifest, records, flagsSummary, validation } = data;
+  const { manifest, records, flagsSummary, validation, rawExtensionFields } = data;
 
   const emissions = useMemo(
     () => computeEmissionsSummary(records),
@@ -51,15 +49,41 @@ export function OverviewPage() {
 
   const flagsData = flagsSummary ?? derivedFlags ?? [];
 
+  // Check if vehicle_class/fuel_type have real data (not all N/A)
+  const hasVehicleClasses = useMemo(
+    () => records.some((r) => r.vehicle_class && r.vehicle_class !== "N/A"),
+    [records]
+  );
+  const hasFuelTypes = useMemo(
+    () => records.some((r) => r.fuel_type && r.fuel_type !== "N/A"),
+    [records]
+  );
+
+  // Build dynamic group tabs based on available data
+  const availableGroupTabs = useMemo(() => {
+    const tabs: { value: GroupByField; label: string }[] = [
+      { value: "city", label: "By City" },
+    ];
+    if (hasVehicleClasses) {
+      tabs.push({ value: "vehicle_class", label: "By Vehicle Class" });
+    }
+    if (hasFuelTypes) {
+      tabs.push({ value: "fuel_type", label: "By Fuel Type" });
+    }
+    tabs.push({ value: "status", label: "By Status" });
+    return tabs;
+  }, [hasVehicleClasses, hasFuelTypes]);
+
   const groupData = useMemo(() => {
-    const result: Record<GroupByField, ReturnType<typeof computeGroupBy>> = {
-      city: computeGroupBy(records, "city"),
-      vehicle_class: computeGroupBy(records, "vehicle_class"),
-      fuel_type: computeGroupBy(records, "fuel_type"),
-      status: computeGroupBy(records, "status"),
-    };
+    const result: Partial<Record<GroupByField, ReturnType<typeof computeGroupBy>>> = {};
+    for (const tab of availableGroupTabs) {
+      result[tab.value] = computeGroupBy(records, tab.value);
+    }
     return result;
-  }, [records]);
+  }, [records, availableGroupTabs]);
+
+  // Detect if extension fields exist (Ghana-specific like BF, Base_kgCO2e, etc.)
+  const hasExtensionFields = rawExtensionFields.length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,20 +137,44 @@ export function OverviewPage() {
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Run ID</dt>
-              <dd className="font-mono text-foreground">{manifest.run_id}</dd>
-              <dt className="text-muted-foreground">Country</dt>
-              <dd className="text-foreground">{manifest.country_code}</dd>
-              <dt className="text-muted-foreground">Schema Version</dt>
-              <dd className="text-foreground">{manifest.schema_version}</dd>
-              <dt className="text-muted-foreground">Engine Version</dt>
-              <dd className="text-foreground">{manifest.engine_version}</dd>
+              {manifest.run_id && (
+                <>
+                  <dt className="text-muted-foreground">Run ID</dt>
+                  <dd className="font-mono text-foreground">{manifest.run_id}</dd>
+                </>
+              )}
+              {manifest.country_code && (
+                <>
+                  <dt className="text-muted-foreground">Country</dt>
+                  <dd className="text-foreground">{manifest.country_code}</dd>
+                </>
+              )}
+              {manifest.engine_version && (
+                <>
+                  <dt className="text-muted-foreground">Engine Version</dt>
+                  <dd className="font-mono text-foreground">{manifest.engine_version}</dd>
+                </>
+              )}
+              {manifest.schema_version && (
+                <>
+                  <dt className="text-muted-foreground">Schema Version</dt>
+                  <dd className="text-foreground">{manifest.schema_version}</dd>
+                </>
+              )}
               <dt className="text-muted-foreground">Timestamp</dt>
               <dd className="text-foreground">{manifest.ran_at_utc || "N/A"}</dd>
               <dt className="text-muted-foreground">Rows In / Out</dt>
               <dd className="text-foreground">
                 {manifest.rows_in.toLocaleString()} / {manifest.rows_out.toLocaleString()}
               </dd>
+              {manifest.input_file && (
+                <>
+                  <dt className="text-muted-foreground">Input File</dt>
+                  <dd className="font-mono text-xs text-foreground break-all">
+                    {String(manifest.input_file)}
+                  </dd>
+                </>
+              )}
             </dl>
           </CardContent>
         </Card>
@@ -136,9 +184,15 @@ export function OverviewPage() {
             <CardTitle>Integrity Hashes</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-1">
-            <HashDisplay label="Input SHA-256" hash={manifest.input_sha256} />
-            <HashDisplay label="Config Hash" hash={manifest.config_hash_full} />
-            <HashDisplay label="Output SHA-256" hash={manifest.output_sha256} />
+            {manifest.input_sha256 && (
+              <HashDisplay label="Input SHA-256" hash={manifest.input_sha256} />
+            )}
+            {manifest.config_hash_full && (
+              <HashDisplay label="Config Hash" hash={manifest.config_hash_full} />
+            )}
+            {manifest.output_sha256 && (
+              <HashDisplay label="Output SHA-256" hash={manifest.output_sha256} />
+            )}
             {manifest.flags_summary_sha256 && (
               <HashDisplay
                 label="Flags Summary SHA-256"
@@ -156,14 +210,17 @@ export function OverviewPage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
-            {(["OK", "REVIEW", "INVALID"] as const).map((s) => (
-              <div key={s} className="flex items-center gap-2">
-                <StatusBadge status={s} />
-                <span className="text-lg font-semibold text-foreground">
-                  {statusCounts[s].toLocaleString()}
-                </span>
-              </div>
-            ))}
+            {(["OK", "REVIEW", "INVALID"] as const).map(
+              (s) =>
+                statusCounts[s] > 0 && (
+                  <div key={s} className="flex items-center gap-2">
+                    <StatusBadge status={s} />
+                    <span className="text-lg font-semibold text-foreground">
+                      {statusCounts[s].toLocaleString()}
+                    </span>
+                  </div>
+                )
+            )}
           </div>
           {/* Visual bar */}
           <div className="flex h-3 rounded-full overflow-hidden mt-4">
@@ -228,7 +285,9 @@ export function OverviewPage() {
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>
-                    <TableCell className="text-foreground">{row.reason || "N/A"}</TableCell>
+                    <TableCell className="text-foreground">
+                      {row.reason || "NONE"}
+                    </TableCell>
                     <TableCell className="text-right font-mono text-foreground">
                       {row.count.toLocaleString()}
                     </TableCell>
@@ -237,7 +296,9 @@ export function OverviewPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-sm text-muted-foreground">No flags data available.</p>
+            <p className="text-sm text-muted-foreground">
+              No flags data available.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -250,28 +311,34 @@ export function OverviewPage() {
         <CardContent>
           <Tabs defaultValue="city">
             <TabsList>
-              {GROUP_TABS.map((tab) => (
+              {availableGroupTabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value}>
                   {tab.label}
                 </TabsTrigger>
               ))}
             </TabsList>
-            {GROUP_TABS.map((tab) => (
+            {availableGroupTabs.map((tab) => (
               <TabsContent key={tab.value} value={tab.value}>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>{tab.label.replace("By ", "")}</TableHead>
                       <TableHead className="text-right">Count</TableHead>
-                      <TableHead className="text-right">Total Emissions</TableHead>
-                      <TableHead className="text-right">Avg Emissions</TableHead>
+                      <TableHead className="text-right">
+                        Total Emissions
+                      </TableHead>
+                      <TableHead className="text-right">
+                        Avg Emissions
+                      </TableHead>
                       <TableHead className="text-right">Flagged</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {groupData[tab.value].map((bucket) => (
+                    {(groupData[tab.value] ?? []).map((bucket) => (
                       <TableRow key={bucket.key}>
-                        <TableCell className="font-medium text-foreground">{bucket.key}</TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {bucket.key}
+                        </TableCell>
                         <TableCell className="text-right text-foreground">
                           {bucket.count.toLocaleString()}
                         </TableCell>
@@ -293,6 +360,31 @@ export function OverviewPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Extension Fields Info */}
+      {hasExtensionFields && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Data Fields</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              The following non-standard fields are present in this dataset and
+              are available on individual driver profiles:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {rawExtensionFields.map((field) => (
+                <span
+                  key={field}
+                  className="inline-flex items-center rounded-md bg-muted px-2.5 py-0.5 text-xs font-mono text-muted-foreground"
+                >
+                  {field}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

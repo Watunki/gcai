@@ -25,16 +25,18 @@ export function ManifestPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <KPICard label="Run ID" value={manifest.run_id} />
-        <KPICard label="Country" value={manifest.country_code} />
-        <KPICard
-          label="Schema Version"
-          value={manifest.schema_version}
-        />
-        <KPICard
-          label="Engine Version"
-          value={manifest.engine_version}
-        />
+        {manifest.run_id && (
+          <KPICard label="Run ID" value={manifest.run_id} />
+        )}
+        {manifest.country_code && (
+          <KPICard label="Country" value={manifest.country_code} />
+        )}
+        {manifest.engine_version && (
+          <KPICard label="Engine Version" value={manifest.engine_version} />
+        )}
+        {manifest.schema_version && (
+          <KPICard label="Schema Version" value={manifest.schema_version} />
+        )}
         <KPICard
           label="Timestamp"
           value={manifest.ran_at_utc || "N/A"}
@@ -43,6 +45,12 @@ export function ManifestPage() {
           label="Rows"
           value={`${manifest.rows_in} in / ${manifest.rows_out} out`}
         />
+        {manifest.input_file && (
+          <KPICard
+            label="Input File"
+            value={String(manifest.input_file)}
+          />
+        )}
       </div>
 
       {/* Status Counts */}
@@ -80,9 +88,21 @@ export function ManifestPage() {
           <CardTitle>Integrity Hashes</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
-          <HashDisplay label="Input SHA-256" hash={manifest.input_sha256} />
-          <HashDisplay label="Config Hash" hash={manifest.config_hash_full} />
-          <HashDisplay label="Output SHA-256" hash={manifest.output_sha256} />
+          {manifest.input_sha256 && (
+            <HashDisplay label="Input SHA-256" hash={manifest.input_sha256} />
+          )}
+          {manifest.config_hash_full && (
+            <HashDisplay
+              label="Config Hash"
+              hash={manifest.config_hash_full}
+            />
+          )}
+          {manifest.output_sha256 && (
+            <HashDisplay
+              label="Output SHA-256"
+              hash={manifest.output_sha256}
+            />
+          )}
           {manifest.flags_summary_sha256 && (
             <HashDisplay
               label="Flags Summary SHA-256"
@@ -91,6 +111,20 @@ export function ManifestPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Rules Snapshot (Ghana-specific) */}
+      {manifest.rules_snapshot && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rules Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RulesSnapshotDisplay
+              snapshot={manifest.rules_snapshot as Record<string, unknown>}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Additional Manifest Fields */}
       {(manifest.ruleset_id ||
@@ -105,19 +139,25 @@ export function ManifestPage() {
               {manifest.ruleset_id && (
                 <>
                   <dt className="text-muted-foreground">Ruleset ID</dt>
-                  <dd className="text-foreground">{String(manifest.ruleset_id)}</dd>
+                  <dd className="text-foreground">
+                    {String(manifest.ruleset_id)}
+                  </dd>
                 </>
               )}
               {manifest.source_dataset_name && (
                 <>
                   <dt className="text-muted-foreground">Source Dataset</dt>
-                  <dd className="text-foreground">{String(manifest.source_dataset_name)}</dd>
+                  <dd className="text-foreground">
+                    {String(manifest.source_dataset_name)}
+                  </dd>
                 </>
               )}
               {manifest.notes && (
                 <>
                   <dt className="text-muted-foreground">Notes</dt>
-                  <dd className="text-foreground">{String(manifest.notes)}</dd>
+                  <dd className="text-foreground">
+                    {String(manifest.notes)}
+                  </dd>
                 </>
               )}
             </dl>
@@ -129,4 +169,41 @@ export function ManifestPage() {
       <JsonViewer data={manifest} title="Raw Manifest JSON" />
     </div>
   );
+}
+
+function RulesSnapshotDisplay({
+  snapshot,
+}: {
+  snapshot: Record<string, unknown>;
+}) {
+  return (
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      {Object.entries(snapshot).map(([key, value]) => (
+        <div key={key} className="contents">
+          <dt className="text-muted-foreground">{formatRuleKey(key)}</dt>
+          <dd className="font-mono text-foreground break-all">
+            {typeof value === "object" && value !== null ? (
+              <div className="flex flex-col gap-1">
+                {Object.entries(value as Record<string, unknown>).map(
+                  ([k, v]) => (
+                    <span key={k}>
+                      {formatRuleKey(k)}: {String(v)}
+                    </span>
+                  )
+                )}
+              </div>
+            ) : (
+              String(value)
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function formatRuleKey(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }

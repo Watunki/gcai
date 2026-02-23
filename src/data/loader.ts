@@ -5,7 +5,7 @@ import type {
   RunData,
   ValidationReport,
 } from "@/types";
-import { REQUIRED_CSV_COLUMNS } from "./constants";
+import { REQUIRED_CSV_COLUMNS, RECOMMENDED_CSV_COLUMNS } from "./constants";
 import {
   normalizeHeaders,
   normalizeManifest,
@@ -98,9 +98,8 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   // 3. Normalize headers
   const [normalizedHeaders, csvLegacyApplied] = normalizeHeaders(rawHeaders);
 
-  // 4. Validate columns
-  const columnValidation = validateColumns(normalizedHeaders);
-  columnValidation.legacyMappingApplied = csvLegacyApplied;
+  // 4. Validate columns (pass legacy flag for lenient mode)
+  const columnValidation = validateColumns(normalizedHeaders, csvLegacyApplied);
   if (csvLegacyApplied) {
     columnValidation.warnings.push(
       "Legacy column names were mapped to canonical names."
@@ -118,8 +117,10 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   const [normalizedManifestRaw, manifestLegacyApplied] =
     normalizeManifest(rawManifest);
 
-  const manifestValidation = validateManifest(normalizedManifestRaw);
-  manifestValidation.legacyMappingApplied = manifestLegacyApplied;
+  const manifestValidation = validateManifest(
+    normalizedManifestRaw,
+    manifestLegacyApplied
+  );
   if (manifestLegacyApplied) {
     manifestValidation.warnings.push(
       "Legacy manifest field names were mapped to canonical names."
@@ -142,7 +143,8 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
     const remappedRow: Record<string, string> = {};
     const rawKeys = Object.keys(rawRow);
     for (let i = 0; i < rawKeys.length; i++) {
-      const normalizedKey = normalizedHeaders[i] ?? rawKeys[i].trim().toLowerCase();
+      const normalizedKey =
+        normalizedHeaders[i] ?? rawKeys[i].trim().toLowerCase();
       remappedRow[normalizedKey] = rawRow[rawKeys[i]];
     }
 
@@ -172,14 +174,7 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   // 7. Identify extension fields
   const coreFields = new Set([
     ...REQUIRED_CSV_COLUMNS,
-    "ts",
-    "country_code",
-    "run_id",
-    "reason_codes",
-    "config_hash_full",
-    "schema_version",
-    "prev_record_hash",
-    "engine_version",
+    ...RECOMMENDED_CSV_COLUMNS,
   ]);
   const rawExtensionFields = normalizedHeaders.filter(
     (h) => !coreFields.has(h)
@@ -206,9 +201,7 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
       reason: String(
         row[flagHeaderMap["reason"] ?? "reason"] ?? ""
       ).trim(),
-      count: Number(
-        row[flagHeaderMap["count"] ?? "count"] ?? 0
-      ),
+      count: Number(row[flagHeaderMap["count"] ?? "count"] ?? 0),
     }));
   } catch {
     // flags_summary.csv is optional; we'll use fallback

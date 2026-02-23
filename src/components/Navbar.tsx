@@ -47,12 +47,21 @@ export function Navbar() {
 
           {loadStatus === "ready" && data && (
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-mono text-xs">
-                {data.manifest.run_id}
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {data.manifest.country_code}
-              </Badge>
+              {data.manifest.engine_version && (
+                <Badge variant="outline" className="font-mono text-xs">
+                  {data.manifest.engine_version}
+                </Badge>
+              )}
+              {data.manifest.run_id && (
+                <Badge variant="outline" className="font-mono text-xs">
+                  {data.manifest.run_id}
+                </Badge>
+              )}
+              {data.manifest.country_code && (
+                <Badge variant="secondary" className="text-xs">
+                  {data.manifest.country_code}
+                </Badge>
+              )}
             </div>
           )}
         </div>
