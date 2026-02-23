@@ -206,6 +206,23 @@ export function normalizeRow(
 // ---- Type guard for RunManifest shape ----
 
 export function coerceManifest(normalized: Record<string, unknown>): RunManifest {
+  const CORE_KEYS = new Set([
+    "schema_version", "run_id", "ran_at_utc", "engine_version",
+    "country_code", "rows_in", "rows_out", "status_counts",
+    "input_sha256", "config_hash_full", "output_sha256",
+    "input_file", "ruleset_id", "rules_snapshot",
+    "json_key_ordering", "flags_summary_sha256",
+    "notes", "source_dataset_name",
+  ]);
+
+  // Collect extension fields
+  const ext: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(normalized)) {
+    if (!CORE_KEYS.has(k)) {
+      ext[k] = v;
+    }
+  }
+
   return {
     schema_version: String(normalized.schema_version ?? ""),
     run_id: String(normalized.run_id ?? ""),
@@ -222,16 +239,19 @@ export function coerceManifest(normalized: Record<string, unknown>): RunManifest
     input_sha256: String(normalized.input_sha256 ?? ""),
     config_hash_full: String(normalized.config_hash_full ?? ""),
     output_sha256: String(normalized.output_sha256 ?? ""),
-    // Pass through optional/extension fields
-    ...Object.fromEntries(
-      Object.entries(normalized).filter(
-        ([k]) =>
-          ![
-            "schema_version", "run_id", "ran_at_utc", "engine_version",
-            "country_code", "rows_in", "rows_out", "status_counts",
-            "input_sha256", "config_hash_full", "output_sha256",
-          ].includes(k)
-      )
-    ),
+    // Known optional fields
+    input_file: normalized.input_file ? String(normalized.input_file) : undefined,
+    ruleset_id: normalized.ruleset_id ? String(normalized.ruleset_id) : undefined,
+    rules_snapshot: normalized.rules_snapshot as Record<string, unknown> | undefined,
+    json_key_ordering: normalized.json_key_ordering as string[] | undefined,
+    flags_summary_sha256: normalized.flags_summary_sha256
+      ? String(normalized.flags_summary_sha256)
+      : undefined,
+    notes: normalized.notes ? String(normalized.notes) : undefined,
+    source_dataset_name: normalized.source_dataset_name
+      ? String(normalized.source_dataset_name)
+      : undefined,
+    // Extension fields
+    _ext: Object.keys(ext).length > 0 ? ext : undefined,
   };
 }

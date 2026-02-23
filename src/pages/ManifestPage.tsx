@@ -48,7 +48,7 @@ export function ManifestPage() {
         {manifest.input_file && (
           <KPICard
             label="Input File"
-            value={String(manifest.input_file)}
+            value={manifest.input_file ?? "N/A"}
           />
         )}
       </div>
@@ -106,7 +106,7 @@ export function ManifestPage() {
           {manifest.flags_summary_sha256 && (
             <HashDisplay
               label="Flags Summary SHA-256"
-              hash={String(manifest.flags_summary_sha256)}
+              hash={manifest.flags_summary_sha256}
             />
           )}
         </CardContent>
@@ -120,7 +120,7 @@ export function ManifestPage() {
           </CardHeader>
           <CardContent>
             <RulesSnapshotDisplay
-              snapshot={manifest.rules_snapshot as Record<string, unknown>}
+              snapshot={manifest.rules_snapshot!}
             />
           </CardContent>
         </Card>
@@ -140,7 +140,7 @@ export function ManifestPage() {
                 <>
                   <dt className="text-muted-foreground">Ruleset ID</dt>
                   <dd className="text-foreground">
-                    {String(manifest.ruleset_id)}
+                    {manifest.ruleset_id}
                   </dd>
                 </>
               )}
@@ -148,7 +148,7 @@ export function ManifestPage() {
                 <>
                   <dt className="text-muted-foreground">Source Dataset</dt>
                   <dd className="text-foreground">
-                    {String(manifest.source_dataset_name)}
+                    {manifest.source_dataset_name}
                   </dd>
                 </>
               )}
@@ -156,7 +156,7 @@ export function ManifestPage() {
                 <>
                   <dt className="text-muted-foreground">Notes</dt>
                   <dd className="text-foreground">
-                    {String(manifest.notes)}
+                    {manifest.notes}
                   </dd>
                 </>
               )}

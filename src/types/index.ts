@@ -20,8 +20,8 @@ export interface CanonicalRecord {
   schema_version?: string;
   prev_record_hash?: string;
   engine_version?: string;
-  // Extension fields
-  [key: string]: unknown;
+  // Extension fields stored separately
+  _ext?: Record<string, unknown>;
 }
 
 // ---- Run Manifest ----
@@ -43,14 +43,15 @@ export interface RunManifest {
   config_hash_full: string;
   output_sha256: string;
   // Recommended optional
+  input_file?: string;
   ruleset_id?: string;
-  rules_snapshot?: unknown;
+  rules_snapshot?: Record<string, unknown>;
   json_key_ordering?: string[];
   flags_summary_sha256?: string;
   notes?: string;
   source_dataset_name?: string;
-  // Extension fields
-  [key: string]: unknown;
+  // Extension fields stored separately
+  _ext?: Record<string, unknown>;
 }
 
 // ---- Flags Summary ----

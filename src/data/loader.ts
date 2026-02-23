@@ -171,7 +171,7 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
     validationReports.push(rowWarningReport);
   }
 
-  // 7. Identify extension fields
+  // 7. Identify extension fields and separate them into _ext
   const coreFields = new Set([
     ...REQUIRED_CSV_COLUMNS,
     ...RECOMMENDED_CSV_COLUMNS,
@@ -179,6 +179,23 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   const rawExtensionFields = normalizedHeaders.filter(
     (h) => !coreFields.has(h)
   );
+
+  // Move extension fields into _ext on each record
+  if (rawExtensionFields.length > 0) {
+    for (const record of records) {
+      const ext: Record<string, unknown> = {};
+      for (const field of rawExtensionFields) {
+        const rec = record as unknown as Record<string, unknown>;
+        if (rec[field] !== undefined) {
+          ext[field] = rec[field];
+          delete rec[field];
+        }
+      }
+      if (Object.keys(ext).length > 0) {
+        record._ext = ext;
+      }
+    }
+  }
 
   // 8. Load optional flags_summary.csv
   let flagsSummary: FlagsSummaryRow[] | null = null;

@@ -58,12 +58,10 @@ export function DriverProfilePage() {
 
   const extensionFields = useMemo(() => {
     if (records.length === 0) return [];
-    const firstRecord = records[0];
-    return Object.keys(firstRecord).filter(
-      (k) =>
-        !CORE_FIELDS.has(k) &&
-        firstRecord[k] !== undefined &&
-        firstRecord[k] !== ""
+    const ext = records[0]._ext;
+    if (!ext) return [];
+    return Object.keys(ext).filter(
+      (k) => ext[k] !== undefined && ext[k] !== ""
     );
   }, [records]);
 
@@ -213,7 +211,7 @@ export function DriverProfilePage() {
           <CardContent>
             <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3 text-sm">
               {extensionFields.map((field) => {
-                const val = primary[field];
+                const val = primary._ext?.[field];
                 const numVal = Number(val);
                 const isNumeric = !isNaN(numVal) && val !== "" && val !== null;
                 return (

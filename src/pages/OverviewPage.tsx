@@ -23,11 +23,6 @@ import {
 } from "@/data/aggregations";
 import type { GroupByField } from "@/types";
 
-const GROUP_TABS: { value: GroupByField; label: string }[] = [
-  { value: "city", label: "By City" },
-  { value: "status", label: "By Status" },
-];
-
 export function OverviewPage() {
   const { data } = useRunData();
   if (!data) return null;
@@ -171,7 +166,7 @@ export function OverviewPage() {
                 <>
                   <dt className="text-muted-foreground">Input File</dt>
                   <dd className="font-mono text-xs text-foreground break-all">
-                    {String(manifest.input_file)}
+                    {manifest.input_file}
                   </dd>
                 </>
               )}
@@ -196,7 +191,7 @@ export function OverviewPage() {
             {manifest.flags_summary_sha256 && (
               <HashDisplay
                 label="Flags Summary SHA-256"
-                hash={String(manifest.flags_summary_sha256)}
+                hash={manifest.flags_summary_sha256}
               />
             )}
           </CardContent>
