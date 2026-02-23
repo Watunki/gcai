@@ -31,8 +31,6 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
-import type { CanonicalRecord } from "@/types";
-
 type SortField =
   | "driver_id"
   | "city"

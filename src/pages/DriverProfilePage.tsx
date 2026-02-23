@@ -19,15 +19,6 @@ import {
 } from "@/components/ui/table";
 import { formatNumber } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
-import {
-  REQUIRED_CSV_COLUMNS,
-  RECOMMENDED_CSV_COLUMNS,
-} from "@/data/constants";
-
-const CORE_FIELDS = new Set([
-  ...REQUIRED_CSV_COLUMNS,
-  ...RECOMMENDED_CSV_COLUMNS,
-]);
 
 // Pretty labels for common Ghana extension fields
 const EXTENSION_FIELD_LABELS: Record<string, string> = {

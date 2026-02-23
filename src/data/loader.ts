@@ -172,7 +172,7 @@ export async function loadRunArtifacts(runId: string): Promise<RunData> {
   }
 
   // 7. Identify extension fields and separate them into _ext
-  const coreFields = new Set([
+  const coreFields: Set<string> = new Set([
     ...REQUIRED_CSV_COLUMNS,
     ...RECOMMENDED_CSV_COLUMNS,
   ]);

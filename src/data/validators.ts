@@ -78,9 +78,10 @@ export function validateManifest(
 
   // For legacy, also warn about strict fields that are absent
   if (legacyApplied) {
+    const lenientSet: Set<string> = new Set(requiredFields);
     const missingStrict = REQUIRED_MANIFEST_FIELDS_STRICT.filter(
       (field) =>
-        !requiredFields.includes(field as typeof requiredFields[number]) &&
+        !lenientSet.has(field) &&
         (manifest[field] === undefined ||
           manifest[field] === null ||
           manifest[field] === "")
