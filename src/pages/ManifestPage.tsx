@@ -1,7 +1,6 @@
 import { useRunData } from "@/context/RunContext";
 import { KPICard } from "@/components/KPICard";
 import { HashDisplay } from "@/components/HashDisplay";
-import { ErrorBanner } from "@/components/ErrorBanner";
 import { JsonViewer } from "@/components/JsonViewer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
@@ -9,21 +8,22 @@ export function ManifestPage() {
   const { data } = useRunData();
   if (!data) return null;
 
-  const { manifest, validation } = data;
+  const { manifest } = data;
 
   return (
     <div className="flex flex-col gap-6">
-      {validation.legacyMappingApplied && (
-        <ErrorBanner
-          type="info"
-          title="Legacy compatibility"
-          messages={[
-            "This manifest was loaded using field name compatibility mapping. Some legacy field names were automatically converted to canonical names.",
-          ]}
-        />
-      )}
+      {/* Deterministic Proof of Execution */}
+      <div className="rounded-lg border border-border bg-card p-5">
+        <h2 className="text-lg font-semibold text-foreground mb-1">
+          Deterministic Proof of Execution
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          This run can be independently replayed using the published engine and identical configuration.
+          All hashes below are deterministically derived from the input data, engine rules, and configuration state.
+        </p>
+      </div>
 
-      {/* Summary Cards */}
+      {/* Execution Parameters */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {manifest.run_id && (
           <KPICard label="Run ID" value={manifest.run_id} />
@@ -53,10 +53,10 @@ export function ManifestPage() {
         )}
       </div>
 
-      {/* Status Counts */}
+      {/* Execution Outcome */}
       <Card>
         <CardHeader>
-          <CardTitle>Status Counts</CardTitle>
+          <CardTitle>Execution Outcome</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-3 gap-4 text-sm">
@@ -82,10 +82,13 @@ export function ManifestPage() {
         </CardContent>
       </Card>
 
-      {/* Hashes */}
+      {/* Cryptographic Integrity Proof */}
       <Card>
         <CardHeader>
-          <CardTitle>Integrity Hashes</CardTitle>
+          <CardTitle>Cryptographic Integrity Proof</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Each hash uniquely identifies an immutable artifact in the execution chain.
+          </p>
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
           {manifest.input_sha256 && (
@@ -112,11 +115,14 @@ export function ManifestPage() {
         </CardContent>
       </Card>
 
-      {/* Rules Snapshot (Ghana-specific) */}
+      {/* Deterministic Rules Configuration */}
       {manifest.rules_snapshot && (
         <Card>
           <CardHeader>
-            <CardTitle>Rules Snapshot</CardTitle>
+            <CardTitle>Deterministic Rules Configuration</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Frozen rule parameters applied at execution time.
+            </p>
           </CardHeader>
           <CardContent>
             <RulesSnapshotDisplay

@@ -7,7 +7,7 @@ import { BarChart3 } from "lucide-react";
 const navLinks = [
   { to: "/", label: "Overview", end: true },
   { to: "/drivers", label: "Drivers" },
-  { to: "/manifest", label: "Manifest" },
+  { to: "/manifest", label: "Execution Proof" },
 ];
 
 export function Navbar() {
@@ -21,7 +21,7 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-foreground" />
               <span className="font-semibold text-foreground text-base">
-                GCAI Dashboard
+                GCaI Public Replay Console
               </span>
             </div>
             <nav className="flex items-center gap-1" aria-label="Main navigation">

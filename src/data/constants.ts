@@ -81,9 +81,8 @@ export const CANONICAL_HEADER_MAP: Record<string, string> = {
   engine_version: "engine_version",
 };
 
-// ---- Legacy Ghana compatibility mapping ----
-// Maps legacy column names -> canonical names
-// Isolated here for easy removal once Ghana outputs are migrated
+// ---- Schema v0 to v1 compatibility mapping ----
+// Maps pre-v1 column names to canonical names
 export const LEGACY_COLUMN_MAP: Record<string, string> = {
   // Core field renames
   driver: "driver_id",
@@ -91,11 +90,11 @@ export const LEGACY_COLUMN_MAP: Record<string, string> = {
   ef_kgco2e_per_l: "emission_factor_used",
   adjusted_kgco2e: "estimated_emissions",
   record_hash_full: "output_hash",
-  // Additional Ghana fields that map to canonical
+  // Additional pre-v1 fields that map to canonical
   gcai_version: "engine_version",
 };
 
-// ---- Legacy manifest field mapping ----
+// ---- Schema v0 to v1 manifest field mapping ----
 export const LEGACY_MANIFEST_FIELD_MAP: Record<string, string> = {
   ran_at_local: "ran_at_utc",
   gcai_output_sha256: "output_sha256",

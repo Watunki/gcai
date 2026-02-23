@@ -20,7 +20,7 @@ import {
 import { formatNumber } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 
-// Pretty labels for common Ghana extension fields
+// Pretty labels for common extension fields
 const EXTENSION_FIELD_LABELS: Record<string, string> = {
   efficiency_reported_km_per_l: "Reported Efficiency (km/L)",
   efficiency_applied_km_per_l: "Applied Efficiency (km/L)",
@@ -165,9 +165,9 @@ export function DriverProfilePage() {
               <dd className="font-mono text-foreground">
                 {formatNumber(primary.estimated_emissions)}
               </dd>
-              <dt className="text-muted-foreground">Fraud Flag</dt>
+              <dt className="text-muted-foreground">Enforcement Status</dt>
               <dd>
-                <FraudBadge flagged={primary.fraud_flag} />
+                <FraudBadge flagged={primary.fraud_flag} reason={primary.reason_codes} />
               </dd>
               <dt className="text-muted-foreground">Status</dt>
               <dd>
@@ -193,7 +193,7 @@ export function DriverProfilePage() {
         </Card>
       </div>
 
-      {/* Extension Fields (Ghana-specific: BF, Base_kgCO2e, etc.) */}
+      {/* Extension Fields */}
       {extensionFields.length > 0 && (
         <Card>
           <CardHeader>
