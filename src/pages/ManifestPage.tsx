@@ -1,7 +1,6 @@
 import { useRunData } from "@/context/RunContext";
 import { KPICard } from "@/components/KPICard";
 import { HashDisplay } from "@/components/HashDisplay";
-import { ErrorBanner } from "@/components/ErrorBanner";
 import { JsonViewer } from "@/components/JsonViewer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
@@ -9,7 +8,7 @@ export function ManifestPage() {
   const { data } = useRunData();
   if (!data) return null;
 
-  const { manifest, validation } = data;
+  const { manifest } = data;
 
   return (
     <div className="flex flex-col gap-6">
