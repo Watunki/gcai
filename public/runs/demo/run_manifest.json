@@ -1,0 +1,28 @@
+{
+  "ran_at_local": "2026-02-15T16:10:16",
+  "gcai_version": "GCaI_v0.1",
+  "input_file": "data/Ghana FINAL (13).xlsx",
+  "input_sha256": "a71ab4378037f8b667a7c58977d18950f570009dc047ba00c23d347c14405da3",
+  "rows_in": 81,
+  "rows_out": 81,
+  "status_counts": {
+    "OK": 75,
+    "REVIEW": 6
+  },
+  "config_hash_full": "1c0fc702e53acef1e34de8793f301da8f46a395d603758418100b081a9342efb",
+  "rules_snapshot": {
+    "version": "GCaI_v0.1",
+    "max_daily_distance_km": 2000,
+    "conservative_efficiency_km_per_l": 15,
+    "behaviour_factors": {
+      "high_idling": 0.15,
+      "heavy_stop_start": 0.1
+    },
+    "review_threshold": 0.2,
+    "emission_factor_petrol": 2.31
+  },
+  "gcai_output_file": "gcai_output.csv",
+  "gcai_output_sha256": "04638c5b2f1a503354ca23da4fc963b12dbadaecf093ff5604496cdd52c71396",
+  "flags_summary_file": "flags_summary.csv",
+  "flags_summary_sha256": "93e07f1e6f71fb74d7a0f7b0065a0adab82bca2e7cbf7472e6c26742c84c575c"
+}
