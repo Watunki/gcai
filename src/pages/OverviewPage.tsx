@@ -27,7 +27,7 @@ export function OverviewPage() {
   const { data } = useRunData();
   if (!data) return null;
 
-  const { manifest, records, flagsSummary, validation, rawExtensionFields } = data;
+  const { manifest, records, flagsSummary, rawExtensionFields } = data;
 
   const emissions = useMemo(
     () => computeEmissionsSummary(records),
@@ -82,15 +82,7 @@ export function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Validation warnings */}
-      {validation.warnings.length > 0 && (
-        <ErrorBanner
-          type="warning"
-          title="Data warnings"
-          messages={validation.warnings}
-        />
-      )}
-      {/* Schema v0 -> v1 transition support is handled transparently */}
+      {/* Validation warnings hidden */}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
